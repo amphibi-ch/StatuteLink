@@ -85,11 +85,13 @@ type InsertionFormat = "callout" | "bullet" | "quote" | "plaintext";
 
 interface LegalReferenceSettings {
   insertionFormat: InsertionFormat;
+  contentOnlyInsertion: boolean;
   lawAliases: string;
 }
 
 const DEFAULT_SETTINGS: LegalReferenceSettings = {
   insertionFormat: "callout",
+  contentOnlyInsertion: false,
   lawAliases: "刑诉法=刑事诉讼法"
 };
 
@@ -402,6 +404,7 @@ export default class LegalReferencePlugin extends Plugin {
       article,
       reference,
       this.settings.insertionFormat,
+      this.settings.contentOnlyInsertion,
       beforeCursor
     ));
   }
@@ -574,7 +577,7 @@ export default class LegalReferencePlugin extends Plugin {
     }
 
     const insertion = formatAutocompleteTextInsertion(
-      `${fragment.text} ${getResolvedReferenceText(resolved)}`,
+      `${fragment.text} ${getResolvedReferenceText(resolved, this.settings.contentOnlyInsertion)}`,
       line.text.slice(0, fragment.start)
     );
     const label = `Fill 《${resolved.article.law}》${formatReferenceLabel(resolved.reference)}`;
@@ -857,6 +860,18 @@ class LegalReferenceSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.insertionFormat)
           .onChange(async (value) => {
             this.plugin.settings.insertionFormat = value as InsertionFormat;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName("Content only")
+      .setDesc("Insert only the provision content, without the generated law title and article label.")
+      .addToggle((toggle) => {
+        toggle
+          .setValue(this.plugin.settings.contentOnlyInsertion)
+          .onChange(async (value) => {
+            this.plugin.settings.contentOnlyInsertion = value;
             await this.plugin.saveSettings();
           });
       });
@@ -1485,37 +1500,39 @@ function formatArticleInsertion(
   article: LegalArticle,
   reference: LegalReference | undefined,
   format: InsertionFormat,
+  contentOnly: boolean,
   beforeCursor = ""
 ) {
   const label = reference ? formatReferenceLabel(reference) : article.articleLabel;
   const text = reference ? getReferenceTargetText(article, reference) : article.text;
+  const heading = `《${article.law}》${label}`;
 
   if (format === "bullet") {
     const bulletText = text
       .split("\n")
       .map((line) => `\t- ${line}`)
       .join("\n");
-    return `\n- 《${article.law}》${label}\n${bulletText}\n`;
+    return contentOnly ? `\n${bulletText}\n` : `\n- ${heading}\n${bulletText}\n`;
   }
 
   if (format === "quote") {
-    const quotedText = text
+    const quotedText = (contentOnly ? text : `${heading}\n${text}`)
       .split("\n")
       .map((line) => `> ${line}`)
       .join("\n");
-    return `\n> 《${article.law}》${label}\n${quotedText}\n`;
+    return `\n${quotedText}\n`;
   }
 
   if (format === "plaintext") {
-    return formatPlainTextInsertion(`《${article.law}》${label}\n${text}`, beforeCursor);
+    return formatPlainTextInsertion(contentOnly ? text : `${heading}\n${text}`, beforeCursor);
   }
 
-  const quotedText = text
+  const quotedText = (contentOnly ? text : `${heading}\n${text}`)
     .split("\n")
     .map((line) => `> ${line}`)
     .join("\n");
 
-  return `\n> [!law] 《${article.law}》${label}\n${quotedText}\n`;
+  return contentOnly ? `\n> [!law]\n${quotedText}\n` : `\n> [!law] ${heading}\n${quotedText}\n`;
 }
 
 function formatPlainTextInsertion(text: string, beforeCursor: string) {
@@ -1528,8 +1545,12 @@ function formatPlainArticle(article: LegalArticle, reference?: LegalReference) {
   return `《${article.law}》${label}\n${text}`;
 }
 
-function getResolvedReferenceText(resolved: ResolvedReference) {
-  return getReferenceTargetText(resolved.article, resolved.reference);
+function getResolvedReferenceText(resolved: ResolvedReference, contentOnly = true) {
+  const text = getReferenceTargetText(resolved.article, resolved.reference);
+  if (contentOnly) {
+    return text;
+  }
+  return `《${resolved.article.law}》${formatReferenceLabel(resolved.reference)}\n${text}`;
 }
 
 function formatAutocompleteTextInsertion(text: string, beforeFragment: string) {

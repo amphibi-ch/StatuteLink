@@ -11,7 +11,7 @@ StatuteLink 是一个面向中文法学生和中文法律研究笔记的 Obsidia
 - 编辑模式和阅读模式下 hover 预览法条。
 - 右侧面板集中显示当前笔记中的法条引用。
 - 显示每一次引用是否已经插入正文：`已插入 / 未插入`。
-- 支持多种插入格式：callout、下一级 bullet、引用块、plain text。
+- 支持多种插入格式：callout、下一级 bullet、引用块、plain text，并可选择是否只插入法条正文。
 - 支持 `Ctrl+Enter` 法条正文补全，不占用普通换行 Enter。
 - 支持从 `.doc`、`.docx`、`.pdf`、`.txt`、`.md` 导入法条文件。
 - 内置七部法学生常用法律的 starter library。
@@ -110,6 +110,8 @@ Legal Library/
 - `Plain text`
 
 `Plain text` 会从当前光标处插入；如果内容有多行，后续行会继承当前列表/引用块的 continuation indentation，避免正文脱离 bullet。
+
+如果打开 `Content only`，插件只插入法条正文，不再额外生成 `《法律名称》第x条` 题头；自动补全仍会保留你已经输入的法条引用。
 
 ## 法律别名
 
