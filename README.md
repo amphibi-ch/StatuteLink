@@ -84,6 +84,8 @@ Legal Library/
 Law Sources/
 ```
 
+插件启用时会自动创建标准的 `Law Sources` 文件夹。导入扫描也兼容大小写和空格差异，例如 `lawsources`、`LawSources`、`law sources`。
+
 然后运行命令：
 
 ```text

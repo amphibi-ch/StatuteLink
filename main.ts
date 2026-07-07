@@ -107,6 +107,7 @@ export default class LegalReferencePlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+    await this.ensureFolder(LAW_SOURCE_DIR);
     this.addSettingTab(new LegalReferenceSettingTab(this.app, this));
     this.registerView(
       VIEW_TYPE_LEGAL_REFERENCE,
@@ -268,7 +269,7 @@ export default class LegalReferencePlugin extends Plugin {
 
   async importLawSourcesFolder() {
     const files = this.app.vault.getFiles().filter((file) => {
-      return file.path.startsWith(`${LAW_SOURCE_DIR}/`) && isSupportedLawSource(file);
+      return isInLawSourceFolder(file) && isSupportedLawSource(file);
     });
 
     if (files.length === 0) {
@@ -1007,6 +1008,15 @@ class LegalReferenceView extends ItemView {
 
 function isSupportedLawSource(file: TFile) {
   return ["md", "txt", "doc", "docx", "rtf", "pdf"].includes(file.extension);
+}
+
+function isInLawSourceFolder(file: TFile) {
+  const [topLevelFolder] = file.path.split("/");
+  return normalizeFolderName(topLevelFolder ?? "") === normalizeFolderName(LAW_SOURCE_DIR);
+}
+
+function normalizeFolderName(value: string) {
+  return value.replace(/[\s_-]/g, "").toLowerCase();
 }
 
 function parseLegalLibraryMarkdown(content: string, fallbackLaw: string): LegalArticle[] {
