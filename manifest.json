@@ -1,0 +1,10 @@
+{
+  "id": "statutelink",
+  "name": "StatuteLink",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Recognize Chinese statute references in Obsidian notes, preview provisions, and insert cited legal text.",
+  "author": "eeltamer",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}

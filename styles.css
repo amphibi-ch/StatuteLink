@@ -1,0 +1,207 @@
+.legal-reference-view {
+  padding: 10px;
+}
+
+.legal-reference-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.legal-reference-toolbar h2 {
+  margin: 0;
+  flex: 1;
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+}
+
+.legal-reference-status {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin-bottom: 10px;
+}
+
+.legal-reference-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.legal-reference-empty {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  padding: 8px 0;
+}
+
+.legal-reference-item {
+  border: 1px solid color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
+  border-radius: 6px;
+  padding: 9px;
+  background: color-mix(in srgb, var(--background-primary) 92%, var(--background-secondary));
+}
+
+.legal-reference-item-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: var(--font-ui-small);
+  word-break: normal;
+}
+
+.legal-reference-item-meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin: 3px 0 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legal-reference-item-text {
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+  max-height: 112px;
+  overflow: auto;
+  line-height: 1.48;
+  font-size: var(--font-ui-small);
+}
+
+.legal-reference-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.legal-reference-item-actions .clickable-icon,
+.legal-reference-popover-actions .clickable-icon {
+  padding: 3px 7px;
+}
+
+.legal-reference-mark {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+.legal-reference-popover {
+  position: fixed;
+  z-index: var(--layer-popover);
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(280px, calc(100vh - 24px));
+  overflow: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  box-shadow: var(--shadow-s);
+  padding: 9px;
+  font-size: var(--font-ui-small);
+  line-height: 1.45;
+}
+
+.legal-reference-popover-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legal-reference-popover-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.legal-reference-popover-meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.legal-reference-popover-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  max-height: 140px;
+  overflow: auto;
+}
+
+.legal-reference-popover-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+/* Keep the legal-reference autocomplete acceptance hint visible in Obsidian. */
+.cm-tooltip-autocomplete ul li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cm-tooltip-autocomplete .cm-completionLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cm-tooltip-autocomplete .cm-completionDetail {
+  display: inline-block !important;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.legal-reference-item-title-row,
+.legal-reference-popover-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.legal-reference-item-title-row .legal-reference-item-title {
+  margin-bottom: 0;
+}
+
+.legal-reference-insertion-status {
+  flex: 0 0 auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: var(--font-ui-smaller);
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.legal-reference-insertion-status.is-inserted {
+  color: var(--text-success);
+  background: color-mix(in srgb, var(--color-green) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-green) 28%, var(--background-modifier-border));
+}
+
+.legal-reference-insertion-status.is-missing {
+  color: var(--text-muted);
+  background: var(--background-secondary);
+}
+
+
+.legal-reference-setting-heading {
+  margin: 18px 0 6px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+}

@@ -1,0 +1,31 @@
+{
+  "name": "obsidian-statutelink",
+  "version": "0.1.0",
+  "description": "Obsidian plugin for recognizing and inserting Chinese statute references.",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "release": "npm run build && node scripts/build-release.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "law",
+    "legal",
+    "statute",
+    "china",
+    "chinese-law",
+    "reference"
+  ],
+  "author": "eeltamer",
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/view": "^6.26.3",
+    "@types/node": "^20.11.30",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.20.2",
+    "obsidian": "^1.5.12",
+    "typescript": "^5.4.2",
+    "@codemirror/autocomplete": "^6.18.6"
+  }
+}

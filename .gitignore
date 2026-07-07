@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+*.log
+.obsidian/
+dist/
+Law Sources/
+Legal Library/
+*.doc
+*.docx
+*.rtf
+*.pdf
+testnote_*.md
+legal_database.md
+!bundled-laws/
