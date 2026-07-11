@@ -1257,7 +1257,7 @@ function parseReferences(content: string): LegalReference[] {
   const references: LegalReference[] = [];
   const numberPattern = "[零〇一二三四五六七八九十百千万两\\d]+";
   const referencePattern = new RegExp(
-    `(?:《?([\\u4e00-\\u9fa5]{2,24}?(?:法|典|编|条例|规定|解释))》?\\s*)?`
+    `(?:《?([\\u4e00-\\u9fa5]{1,24}?(?:法|典|编|条例|规定|解释))》?\\s*)?`
       + `第?(${numberPattern})条`
       + `(?:第?(${numberPattern})款)?`
       + `(?:第?[（(]?(${numberPattern})[）)]?项|[（(](${numberPattern})[）)])?`,
