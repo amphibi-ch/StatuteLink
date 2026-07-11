@@ -86,12 +86,16 @@ type InsertionFormat = "callout" | "bullet" | "quote" | "plaintext";
 interface LegalReferenceSettings {
   insertionFormat: InsertionFormat;
   contentOnlyInsertion: boolean;
+  enableStatuteNotes: boolean;
+  statuteNotesFolder: string;
   lawAliases: string;
 }
 
 const DEFAULT_SETTINGS: LegalReferenceSettings = {
   insertionFormat: "callout",
   contentOnlyInsertion: false,
+  enableStatuteNotes: false,
+  statuteNotesFolder: "Legal Notes",
   lawAliases: "刑诉法=刑事诉讼法"
 };
 
@@ -401,13 +405,31 @@ export default class LegalReferencePlugin extends Plugin {
 
     const cursor = editor.getCursor("from");
     const beforeCursor = editor.getLine(cursor.line).slice(0, cursor.ch);
+    const statuteLink = this.settings.enableStatuteNotes && reference
+      ? await this.ensureStatuteNote(article, reference)
+      : undefined;
     editor.replaceSelection(formatArticleInsertion(
       article,
       reference,
       this.settings.insertionFormat,
       this.settings.contentOnlyInsertion,
+      statuteLink,
       beforeCursor
     ));
+  }
+
+  async ensureStatuteNote(article: LegalArticle, reference: LegalReference) {
+    const folder = normalizeVaultFolderPath(this.settings.statuteNotesFolder || DEFAULT_SETTINGS.statuteNotesFolder);
+    const lawFolder = `${folder}/${safeFileName(article.law)}`;
+    await this.ensureFolderPath(lawFolder);
+
+    const notePath = `${lawFolder}/${safeFileName(formatArticleLabel(article))}.md`;
+    const existing = this.app.vault.getAbstractFileByPath(notePath);
+    if (!(existing instanceof TFile)) {
+      await this.app.vault.create(notePath, renderStatuteNote(article));
+    }
+
+    return formatStatuteWikilink(notePath, article, reference);
   }
 
   async copyArticle(article: LegalArticle, reference?: LegalReference) {
@@ -578,7 +600,7 @@ export default class LegalReferencePlugin extends Plugin {
     }
 
     const insertion = formatAutocompleteTextInsertion(
-      `${fragment.text} ${getResolvedReferenceText(resolved, this.settings.contentOnlyInsertion)}`,
+      `${this.settings.enableStatuteNotes ? formatStatuteLinkText(this.settings.statuteNotesFolder, resolved) : fragment.text} ${getResolvedReferenceText(resolved, this.settings.contentOnlyInsertion)}`,
       line.text.slice(0, fragment.start)
     );
     const label = `Fill 《${resolved.article.law}》${formatReferenceLabel(resolved.reference)}`;
@@ -590,7 +612,14 @@ export default class LegalReferencePlugin extends Plugin {
           label,
           type: "text",
           detail: "Ctrl ↵",
-          apply: insertion.trimStart()
+          apply: (view, _completion, from, to) => {
+            if (this.settings.enableStatuteNotes) {
+              void this.ensureStatuteNote(resolved.article, resolved.reference);
+            }
+            view.dispatch({
+              changes: { from, to, insert: insertion.trimStart() }
+            });
+          }
         }
       ],
       validFor: /[\u4e00-\u9fa5零〇一二三四五六七八九十百千万两\d第条款项（）()《》]*$/
@@ -825,6 +854,15 @@ export default class LegalReferencePlugin extends Plugin {
     }
   }
 
+  private async ensureFolderPath(folderPath: string) {
+    const parts = normalizeVaultFolderPath(folderPath).split("/").filter(Boolean);
+    let current = "";
+    for (const part of parts) {
+      current = current ? `${current}/${part}` : part;
+      await this.ensureFolder(current);
+    }
+  }
+
   private refreshReferenceLeaves() {
     this.app.workspace.getLeavesOfType(VIEW_TYPE_LEGAL_REFERENCE).forEach((leaf) => {
       const view = leaf.view;
@@ -873,6 +911,31 @@ class LegalReferenceSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.contentOnlyInsertion)
           .onChange(async (value) => {
             this.plugin.settings.contentOnlyInsertion = value;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName("Create statute notes")
+      .setDesc("When enabled, generated statute references become wikilinks and StatuteLink creates one note per article.")
+      .addToggle((toggle) => {
+        toggle
+          .setValue(this.plugin.settings.enableStatuteNotes)
+          .onChange(async (value) => {
+            this.plugin.settings.enableStatuteNotes = value;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName("Statute notes folder")
+      .setDesc("Folder for per-article statute notes. This is separate from Legal Library.")
+      .addText((text) => {
+        text
+          .setPlaceholder("Legal Notes")
+          .setValue(this.plugin.settings.statuteNotesFolder)
+          .onChange(async (value) => {
+            this.plugin.settings.statuteNotesFolder = value.trim() || DEFAULT_SETTINGS.statuteNotesFolder;
             await this.plugin.saveSettings();
           });
       });
@@ -1420,6 +1483,14 @@ function safeFileName(value: string) {
   return value.replace(/[\\/:*?"<>|]/g, "_");
 }
 
+function normalizeVaultFolderPath(value: string) {
+  return value
+    .split("/")
+    .map((part) => safeFileName(part.trim()))
+    .filter(Boolean)
+    .join("/") || DEFAULT_SETTINGS.statuteNotesFolder;
+}
+
 function extractDesktopDocumentText(app: Plugin["app"], file: TFile) {
   const adapter = app.vault.adapter as { getFullPath?: (path: string) => string };
   const fullPath = adapter.getFullPath?.(file.path);
@@ -1511,11 +1582,12 @@ function formatArticleInsertion(
   reference: LegalReference | undefined,
   format: InsertionFormat,
   contentOnly: boolean,
+  statuteLink?: string,
   beforeCursor = ""
 ) {
   const label = reference ? formatReferenceLabel(reference) : article.articleLabel;
   const text = reference ? getReferenceTargetText(article, reference) : article.text;
-  const heading = `《${article.law}》${label}`;
+  const heading = statuteLink ?? `《${article.law}》${label}`;
 
   if (format === "bullet") {
     const bulletText = text
@@ -1553,6 +1625,43 @@ function formatPlainArticle(article: LegalArticle, reference?: LegalReference) {
   const label = reference ? formatReferenceLabel(reference) : article.articleLabel;
   const text = reference ? getReferenceTargetText(article, reference) : article.text;
   return `《${article.law}》${label}\n${text}`;
+}
+
+function formatArticleLabel(article: LegalArticle) {
+  return article.articleLabel || `第${article.article}条`;
+}
+
+function formatStatuteLinkText(folder: string, resolved: ResolvedReference) {
+  return formatStatuteWikilink(getStatuteNotePath(folder, resolved.article), resolved.article, resolved.reference);
+}
+
+function getStatuteNotePath(folder: string, article: LegalArticle) {
+  return `${normalizeVaultFolderPath(folder)}/${safeFileName(article.law)}/${safeFileName(formatArticleLabel(article))}.md`;
+}
+
+function formatStatuteWikilink(notePath: string, article: LegalArticle, reference: LegalReference) {
+  const linkTarget = notePath.replace(/\.md$/i, "");
+  return `[[${linkTarget}|${formatStatuteLinkAlias(article, reference)}]]`;
+}
+
+function formatStatuteLinkAlias(article: LegalArticle, reference: LegalReference) {
+  return `${getShortLawName(article.law)}${formatReferenceLabel(reference)}`;
+}
+
+function renderStatuteNote(article: LegalArticle) {
+  const title = `《${article.law}》${formatArticleLabel(article)}`;
+  return [
+    "---",
+    "type: statute",
+    `law: ${article.law}`,
+    `article: ${article.article}`,
+    "---",
+    "",
+    `# ${title}`,
+    "",
+    article.text.trim(),
+    ""
+  ].join("\n");
 }
 
 function getResolvedReferenceText(resolved: ResolvedReference, contentOnly = true) {
