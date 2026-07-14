@@ -12,6 +12,7 @@ StatuteLink 是一个面向中文法学生和中文法律研究笔记的 Obsidia
 - 右侧面板集中显示当前笔记中的法条引用。
 - 显示每一次引用是否已经插入正文：`已插入 / 未插入`。
 - 支持多种插入格式：callout、下一级 bullet、引用块、plain text，并可选择是否只插入法条正文。
+- 可选创建单条法条 note，并把插入/补全的法条引用转换为 Obsidian wikilink。
 - 支持 `Ctrl+Enter` 法条正文补全，不占用普通换行 Enter。
 - 支持从 `.doc`、`.docx`、`.pdf`、`.txt`、`.md` 导入法条文件。
 - 内置七部法学生常用法律的 starter library。
@@ -130,6 +131,28 @@ Legal Library/
 `Plain text` 会从当前光标处插入；如果内容有多行，后续行会继承当前列表/引用块的 continuation indentation，避免正文脱离 bullet。
 
 如果打开 `Content only`，插件只插入法条正文，不再额外生成 `《法律名称》第x条` 题头；自动补全仍会保留你已经输入的法条引用。
+
+## 双链与法条 Note
+
+默认情况下，StatuteLink 不会为每个法条自动创建 Markdown 文件，避免污染 vault。
+
+如果在设置中打开 `Create statute notes`，插件会在插入或补全法条时创建/复用单条法条 note，并把生成的法条引用写成 wikilink，例如：
+
+```md
+[[Legal Notes/中华人民共和国民法典/第1165条|民法典第1165条]]
+```
+
+法条 note 的存储位置可以通过 `Statute notes folder` 自定义，默认是：
+
+```text
+Legal Notes/
+```
+
+这个文件夹和 `Legal Library/` 是分开的：`Legal Library/` 存整部法律文本，用于检索和匹配；`Legal Notes/` 存用户知识网络中真正需要链接的单条法条页面。
+
+目前法条 note 按“条”创建。引用 `民法典第1177条第二款` 时，插件会链接到 `第1177条.md`，但 alias 会保留到第二款。
+
+对于已经写在笔记里的普通法条引用，可以运行 `StatuteLink: Link detected statute references in active note`，或点击右侧面板顶部的 link 按钮，将当前笔记中已识别的引用批量转换为 wikilink。
 
 ## 法律别名
 
