@@ -152,6 +152,8 @@ Legal Notes/
 
 目前法条 note 按“条”创建。引用 `民法典第1177条第二款` 时，插件会链接到 `第1177条.md`，但 alias 会保留到第二款。
 
+对于已经写在笔记里的普通法条引用，可以运行 `StatuteLink: Link detected statute references in active note`，或点击右侧面板顶部的 link 按钮，将当前笔记中已识别的引用批量转换为 wikilink。
+
 ## 法律别名
 
 设置页支持自定义法律别名，一行一个：

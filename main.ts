@@ -164,6 +164,14 @@ export default class LegalReferencePlugin extends Plugin {
       }
     });
 
+    this.addCommand({
+      id: "link-detected-statute-references",
+      name: "Link detected statute references in active note",
+      callback: async () => {
+        await this.linkDetectedStatuteReferences();
+      }
+    });
+
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
         if (file instanceof TFile && isSupportedLawSource(file)) {
@@ -430,6 +438,48 @@ export default class LegalReferencePlugin extends Plugin {
     }
 
     return formatStatuteWikilink(notePath, article, reference);
+  }
+
+  async linkDetectedStatuteReferences() {
+    if (!this.settings.enableStatuteNotes) {
+      new Notice("Enable Create statute notes before linking detected references.");
+      return;
+    }
+
+    const editor = this.app.workspace.activeEditor?.editor ?? this.lastEditor;
+    if (!editor) {
+      new Notice("Open a Markdown editor before linking statute references.");
+      return;
+    }
+
+    const content = editor.getValue();
+    const maskedContent = maskExistingMarkdownLinks(stripGeneratedLawInsertionsPreserveOffsets(content));
+    const references = this.resolveReferences(parseReferences(maskedContent));
+    if (references.length === 0) {
+      new Notice("No unlinked statute references found.");
+      return;
+    }
+
+    let updated = content;
+    let linkedCount = 0;
+    for (const resolved of [...references].reverse()) {
+      const { start, end } = resolved.reference;
+      const original = updated.slice(start, end);
+      if (original.includes("[[") || original.includes("]]")) {
+        continue;
+      }
+      const statuteLink = await this.ensureStatuteNote(resolved.article, resolved.reference);
+      updated = `${updated.slice(0, start)}${statuteLink}${updated.slice(end)}`;
+      linkedCount += 1;
+    }
+
+    if (linkedCount === 0) {
+      new Notice("No unlinked statute references found.");
+      return;
+    }
+
+    editor.setValue(updated);
+    new Notice(`Linked ${linkedCount} statute reference(s).`);
   }
 
   async copyArticle(article: LegalArticle, reference?: LegalReference) {
@@ -1017,6 +1067,14 @@ class LegalReferenceView extends ItemView {
         await this.render();
       });
 
+    new ButtonComponent(toolbar)
+      .setIcon("link")
+      .setTooltip("Link detected statute references")
+      .onClick(async () => {
+        await this.plugin.linkDetectedStatuteReferences();
+        await this.render();
+      });
+
     container.createDiv({
       cls: "legal-reference-status",
       text: `Indexed articles: ${this.plugin.getArticleCount()}`
@@ -1229,6 +1287,12 @@ function stripGeneratedLawInsertionsPreserveOffsets(content: string) {
 
 function maskLine(line: string) {
   return " ".repeat(line.length);
+}
+
+function maskExistingMarkdownLinks(content: string) {
+  return content
+    .replace(/\[\[[^\]\n]+\]\]/g, (match) => maskLine(match))
+    .replace(/\[[^\]\n]+\]\([^\)\n]+\)/g, (match) => maskLine(match));
 }
 
 function isGeneratedLawQuoteHeader(line: string) {

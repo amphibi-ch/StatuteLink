@@ -13,6 +13,7 @@
 - 支持仅插入法条正文，省略插件生成的法律名称和条文序号题头。
 - 插件启用时自动创建 `Law Sources` 文件夹，并兼容 `lawsources`、`LawSources` 等同义文件夹名。
 - 支持可选创建单条法条 note，并将生成的法条引用转换为 Obsidian wikilink。
+- 支持将当前笔记中已识别的普通法条引用批量转换为 wikilink。
 - 支持 `Ctrl+Enter` 自动补全法条正文。
 - 支持从 Word、PDF、TXT、Markdown 导入法条来源文件。
 - 内置七部法学生常用法律的 starter library。
