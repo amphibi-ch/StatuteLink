@@ -1313,6 +1313,18 @@ function parseArticleNumber(value: string): number | null {
     ["万", 10000]
   ]);
 
+  if (![...normalized].some((char) => unitMap.has(char))) {
+    let positional = "";
+    for (const char of normalized) {
+      const digit = digitMap.get(char);
+      if (digit === undefined) {
+        return null;
+      }
+      positional += String(digit);
+    }
+    return Number(positional);
+  }
+
   let result = 0;
   let section = 0;
   let number = 0;
