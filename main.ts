@@ -411,11 +411,15 @@ export default class LegalReferencePlugin extends Plugin {
       return;
     }
 
-    const cursor = editor.getCursor("from");
-    const beforeCursor = editor.getLine(cursor.line).slice(0, cursor.ch);
     const statuteLink = this.settings.enableStatuteNotes && reference
       ? await this.ensureStatuteNote(article, reference)
       : undefined;
+    if (statuteLink && reference) {
+      this.replaceDetectedReferenceWithLink(editor, reference, statuteLink);
+    }
+
+    const cursor = editor.getCursor("from");
+    const beforeCursor = editor.getLine(cursor.line).slice(0, cursor.ch);
     editor.replaceSelection(formatArticleInsertion(
       article,
       reference,
@@ -424,6 +428,23 @@ export default class LegalReferencePlugin extends Plugin {
       statuteLink,
       beforeCursor
     ));
+  }
+
+  private replaceDetectedReferenceWithLink(editor: Editor, reference: LegalReference, statuteLink: string) {
+    const content = editor.getValue();
+    const { start, end, raw } = reference;
+    if (start < 0 || end > content.length || content.slice(start, end) !== raw) {
+      return;
+    }
+
+    // Do not nest a wikilink when the reference has already been linked.
+    const linkStart = content.lastIndexOf("[[", start);
+    const linkEnd = content.indexOf("]]", start);
+    if (linkStart !== -1 && linkEnd !== -1 && linkStart < start && linkEnd >= end) {
+      return;
+    }
+
+    editor.replaceRange(statuteLink, editor.offsetToPos(start), editor.offsetToPos(end));
   }
 
   async ensureStatuteNote(article: LegalArticle, reference: LegalReference) {
@@ -649,8 +670,11 @@ export default class LegalReferencePlugin extends Plugin {
       return null;
     }
 
+    const referenceText = this.settings.enableStatuteNotes
+      ? formatStatuteLinkText(this.settings.statuteNotesFolder, resolved)
+      : fragment.text;
     const insertion = formatAutocompleteTextInsertion(
-      `${this.settings.enableStatuteNotes ? formatStatuteLinkText(this.settings.statuteNotesFolder, resolved) : fragment.text} ${getResolvedReferenceText(resolved, this.settings.contentOnlyInsertion)}`,
+      `${referenceText} ${getReferenceTargetText(resolved.article, resolved.reference)}`,
       line.text.slice(0, fragment.start)
     );
     const label = `Fill 《${resolved.article.law}》${formatReferenceLabel(resolved.reference)}`;
@@ -1685,7 +1709,7 @@ function formatArticleInsertion(
     return formatPlainTextInsertion(contentOnly ? text : `${heading}\n${text}`, beforeCursor);
   }
 
-  const quotedText = (contentOnly ? text : `${heading}\n${text}`)
+  const quotedText = text
     .split("\n")
     .map((line) => `> ${line}`)
     .join("\n");
